@@ -1,0 +1,452 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../theme/app_theme.dart';
+
+class AnimatedTextField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType keyboardType;
+  final bool obscureText;
+  final int? maxLength;
+  final int maxLines;
+  final bool enabled;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
+  final bool showEmailSuggestions;
+
+  const AnimatedTextField({
+    super.key,
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType = TextInputType.text,
+    this.obscureText = false,
+    this.maxLength,
+    this.maxLines = 1,
+    this.enabled = true,
+    this.validator,
+    this.onChanged,
+    this.inputFormatters,
+    this.showEmailSuggestions = false,
+  });
+
+  @override
+  State<AnimatedTextField> createState() => _AnimatedTextFieldState();
+}
+
+class _AnimatedTextFieldState extends State<AnimatedTextField>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _borderAnimation;
+  bool _isFocused = false;
+  bool _hasText = false;
+  
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  bool _showSuggestions = false;
+  
+  final List<String> _emailDomains = [
+    'gmail.com',
+    'hotmail.com',
+    'yahoo.com',
+    'outlook.com',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _borderAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    widget.controller.addListener(() {
+      setState(() {
+        _hasText = widget.controller.text.isNotEmpty;
+      });
+      
+      if (widget.showEmailSuggestions) {
+        _handleEmailInput();
+      }
+    });
+  }
+  
+  void _handleEmailInput() {
+    final text = widget.controller.text;
+    if (text.contains('@') && !text.contains('@.') && text.split('@').length == 2) {
+      final parts = text.split('@');
+      final domain = parts[1];
+      
+      if (domain.isEmpty || !domain.contains('.')) {
+        _showEmailSuggestions();
+      } else {
+        _hideEmailSuggestions();
+      }
+    } else {
+      _hideEmailSuggestions();
+    }
+  }
+  
+  void _showEmailSuggestions() {
+    if (_showSuggestions) return;
+    
+    _showSuggestions = true;
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+  
+  void _hideEmailSuggestions() {
+    if (!_showSuggestions) return;
+    
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _showSuggestions = false;
+  }
+  
+  OverlayEntry _createOverlayEntry() {
+    RenderBox renderBox = context.findRenderObject() as RenderBox;
+    var size = renderBox.size;
+    
+    final text = widget.controller.text;
+    final username = text.split('@')[0];
+    
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        width: size.width,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: Offset(0, size.height + 5),
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(12),
+            color: AppTheme.cardColor,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.neonBlue.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: _emailDomains.map((domain) {
+                  return InkWell(
+                    onTap: () {
+                      widget.controller.text = '$username@$domain';
+                      widget.controller.selection = TextSelection.fromPosition(
+                        TextPosition(offset: widget.controller.text.length),
+                      );
+                      _hideEmailSuggestions();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.email_outlined,
+                            size: 18,
+                            color: AppTheme.neonBlue,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '$username@$domain',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _hideEmailSuggestions();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _borderAnimation,
+      builder: (context, child) {
+        return CompositedTransformTarget(
+          link: _layerLink,
+          child: TextSelectionTheme(
+            data: TextSelectionThemeData(
+              selectionColor: AppTheme.neonBlue.withValues(alpha: 0.4),
+              cursorColor: AppTheme.neonBlue,
+              selectionHandleColor: AppTheme.neonBlue,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: _isFocused
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.neonBlue.withValues(alpha: 0.3 * _borderAnimation.value),
+                          blurRadius: 15 * _borderAnimation.value,
+                          spreadRadius: 2 * _borderAnimation.value,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: TextFormField(
+              controller: widget.controller,
+              keyboardType: widget.keyboardType,
+              obscureText: widget.obscureText,
+              maxLength: widget.maxLength,
+              maxLines: widget.maxLines,
+              enabled: widget.enabled,
+              validator: widget.validator,
+              onChanged: widget.onChanged,
+              inputFormatters: widget.inputFormatters,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+              ),
+              cursorColor: AppTheme.neonBlue,
+              showCursor: true,
+              onTap: () {
+                setState(() => _isFocused = true);
+                _controller.forward();
+              },
+              onEditingComplete: () {
+                setState(() => _isFocused = false);
+                _controller.reverse();
+                _hideEmailSuggestions();
+              },
+              decoration: InputDecoration(
+                labelText: widget.label,
+                counterText: '',
+                contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                isDense: true,
+                prefixIcon: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(
+                    widget.icon,
+                    size: 16,
+                    color: _isFocused
+                        ? AppTheme.neonBlue
+                        : _hasText
+                            ? AppTheme.secondaryColor
+                            : Colors.white38,
+                  ),
+                ),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  color: _isFocused ? AppTheme.neonBlue : Colors.white54,
+                ),
+                filled: true,
+                fillColor: AppTheme.cardColor.withValues(alpha: 0.8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: _hasText
+                        ? AppTheme.secondaryColor.withValues(alpha: 0.5)
+                        : Colors.white.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: AppTheme.neonBlue.withValues(alpha: _borderAnimation.value),
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class SearchTextField extends StatefulWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final void Function(String)? onSubmitted;
+  final void Function(String)? onChanged;
+  final VoidCallback? onClear;
+  final bool dense;
+
+  const SearchTextField({
+    super.key,
+    required this.controller,
+    this.hintText = 'Ara...',
+    this.onSubmitted,
+    this.onChanged,
+    this.onClear,
+    this.dense = false,
+  });
+
+  @override
+  State<SearchTextField> createState() => _SearchTextFieldState();
+}
+
+class _SearchTextFieldState extends State<SearchTextField>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  bool _isFocused = false;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    widget.controller.addListener(() {
+      setState(() {
+        _hasText = widget.controller.text.isNotEmpty;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(widget.dense ? 16 : 20);
+    final fontSize = widget.dense ? 14.0 : 16.0;
+    final iconSize = widget.dense ? 20.0 : 24.0;
+    final contentPadding = EdgeInsets.symmetric(
+      horizontal: widget.dense ? 14 : 20,
+      vertical: widget.dense ? 12 : 16,
+    );
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.cardColor,
+            AppTheme.cardColor.withValues(alpha: 0.8),
+          ],
+        ),
+        boxShadow: _isFocused
+            ? [
+                BoxShadow(
+                  color: AppTheme.neonBlue.withValues(alpha: widget.dense ? 0.18 : 0.3),
+                  blurRadius: widget.dense ? 14 : 20,
+                  spreadRadius: widget.dense ? 1 : 2,
+                ),
+                BoxShadow(
+                  color: AppTheme.neonPurple.withValues(alpha: widget.dense ? 0.12 : 0.2),
+                  blurRadius: widget.dense ? 18 : 30,
+                  spreadRadius: widget.dense ? 2 : 5,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: widget.dense ? 8 : 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+        border: Border.all(
+          color: _isFocused
+              ? AppTheme.neonBlue.withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.1),
+          width: _isFocused ? 2 : 1,
+        ),
+      ),
+      child: TextField(
+        controller: widget.controller,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        onTap: () {
+          setState(() => _isFocused = true);
+          _controller.forward();
+        },
+        onEditingComplete: () {
+          setState(() => _isFocused = false);
+          _controller.reverse();
+        },
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontSize: fontSize,
+          ),
+          prefixIcon: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: EdgeInsets.all(widget.dense ? 10 : 12),
+            child: Icon(
+              Icons.search,
+              color: _isFocused ? AppTheme.neonBlue : Colors.white38,
+              size: iconSize,
+            ),
+          ),
+          suffixIcon: _hasText
+              ? IconButton(
+                  onPressed: () {
+                    widget.controller.clear();
+                    widget.onClear?.call();
+                  },
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white.withValues(alpha: 0.5),
+                  ),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: contentPadding,
+        ),
+      ),
+    );
+  }
+}

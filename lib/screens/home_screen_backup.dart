@@ -1,0 +1,2364 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:intl/intl.dart';
+import '../theme/app_theme.dart';
+import 'webview_screen.dart';
+import 'tck_maddeleri_screen.dart';
+import 'banks_screen.dart';
+import '../services/auth_service.dart';
+import '../services/database_service.dart';
+import '../widgets/glassmorphic_container.dart';
+import '../widgets/neon_button.dart';
+import '../widgets/animated_text_field.dart';
+import '../widgets/sidebar_menu.dart';
+import 'client_detail_screen.dart';
+import 'clients_screen.dart';
+import 'add_client_screen.dart';
+import 'account_creation_screen.dart';
+import 'add_court_date_screen.dart';
+import 'settings_screen.dart';
+import 'login_screen.dart';
+import 'logo_menu_screen.dart';
+import 'official_documents_screen.dart';
+import 'financial_matters_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with TickerProviderStateMixin {
+  final _searchController = TextEditingController();
+  final DatabaseService _dbService = DatabaseService();
+  final AuthService _authService = AuthService();
+  
+  bool _isSearching = false;
+  bool _showSearchResult = false;
+  Map<String, dynamic>? _searchResult;
+  String? _lastLogin;
+  String? _lastLogout;
+  
+  late AnimationController _backgroundController;
+  late AnimationController _pulseController;
+  late AnimationController _logoBlinkController;
+  int _selectedMenuIndex = 0;
+  
+  int _clientCount = 0;
+  int _upcomingCases = 0;
+  int _pendingPayments = 0;
+  int _totalRequests = 0;
+  
+  // Minimized browsers listesi
+  final List<MinimizedBrowser> _minimizedBrowsers = [];
+
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature sayfası yakında eklenecek'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _handleMenuTap(int index) async {
+    setState(() => _selectedMenuIndex = index);
+
+    switch (index) {
+      case 0:
+        return;
+      case 1:
+        final added = await Navigator.push<bool>(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const ClientsScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        if (added == true && mounted) {
+          setState(() {});
+        }
+        return;
+      case 2:
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const AddCourtDateScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        return;
+      case 3:
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const FinancialMattersScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        return;
+      case 4:
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const TckMaddeleriScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        return;
+      case 5:
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                BanksScreen(onMinimize: _addMinimizedBrowser),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        return;
+      case 6:
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const SettingsScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        return;
+      case 7:
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const OfficialDocumentsScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        return;
+      case 8:
+        // Yeni Müvekkil Ekle
+        final result = await Navigator.push<bool>(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const AddClientScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
+        if (result == true && mounted) {
+          setState(() {});
+        }
+        return;
+      default:
+        return;
+    }
+  }
+
+  void _addMinimizedBrowser(MinimizedBrowser minimized) {
+    setState(() {
+      final existingIndex = _minimizedBrowsers.indexWhere(
+        (b) => b.title == minimized.title,
+      );
+
+      if (existingIndex >= 0) {
+        _minimizedBrowsers[existingIndex] = minimized;
+      } else {
+        _minimizedBrowsers.add(minimized);
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initAnimations();
+    _checkAccountCreated(); // Hesap kontrol
+    _loadLastLoginInfo();
+    _loadStats();
+    _checkReminders();
+  }
+
+  void _initAnimations() {
+    _backgroundController = AnimationController(
+      duration: const Duration(seconds: 15),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _logoBlinkController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  Future<void> _checkAccountCreated() async {
+    final isAccountCreated = await _authService.isAccountCreated();
+    if (!isAccountCreated && mounted) {
+      // Hesap oluşturulmamış, AddClientScreen'e git
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const AccountCreationScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                ),
+                child: child,
+              ),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
+    }
+  }
+
+
+  Future<void> _loadLastLoginInfo() async {
+    final info = await _authService.getLastLoginInfo();
+    setState(() {
+      _lastLogin = info['last_login'];
+      _lastLogout = info['last_logout'];
+    });
+  }
+
+  Future<void> _loadStats() async {
+    final clients = await _dbService.getAllClients();
+    final courtDates = await _dbService.getUpcomingCourtDates();
+    final payments = await _dbService.getTodayPaymentCommitments();
+    
+    setState(() {
+      _clientCount = clients.length;
+      _upcomingCases = courtDates.length;
+      _pendingPayments = payments.length;
+      _totalRequests = 5;
+    });
+  }
+
+  Future<void> _checkReminders() async {
+    // Bugünün ödeme taahhütlerini kontrol et
+    final commitments = await _dbService.getTodayPaymentCommitments();
+    if (commitments.isNotEmpty) {
+      _showReminderDialog('Ödeme Hatırlatması', 
+        '${commitments.length} müvekkilinizin bugün ödeme taahhüdü var.');
+    }
+    
+    // Yaklaşan mahkeme tarihlerini kontrol et
+    final courtDates = await _dbService.getUpcomingCourtDates();
+    if (courtDates.isNotEmpty) {
+      _showReminderDialog('Mahkeme Hatırlatması',
+        '${courtDates.length} yaklaşan mahkeme tarihiniz var.');
+    }
+  }
+
+  void _showReminderDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.notifications_active, color: AppTheme.goldColor),
+            const SizedBox(width: 10),
+            Text(title, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: Text(message, style: const TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tamam', style: TextStyle(color: AppTheme.neonBlue)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _searchClient(String tcNo) async {
+    if (tcNo.length != 11) {
+      _showError('TC Kimlik numarası 11 haneli olmalıdır');
+      return;
+    }
+    
+    setState(() => _isSearching = true);
+    
+    final client = await _dbService.searchClientByTC(tcNo);
+    
+    setState(() {
+      _isSearching = false;
+      _showSearchResult = true;
+      if (client != null) {
+        _searchResult = client.toJson();
+      } else {
+        _searchResult = null;
+      }
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 10),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  Future<void> _logout() async {
+    await _authService.updateLogoutRecord('lawyer_id');
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LoginScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _backgroundController.dispose();
+    _pulseController.dispose();
+    _logoBlinkController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _backgroundController,
+            builder: (context, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.lerp(
+                        AppTheme.darkBackground,
+                        AppTheme.primaryColor,
+                        _backgroundController.value * 0.12,
+                      )!,
+                      AppTheme.darkBackground,
+                      Color.lerp(
+                        AppTheme.darkBackground,
+                        AppTheme.surfaceColor,
+                        _backgroundController.value * 0.10,
+                      )!,
+                    ],
+                  ),
+                ),
+                child: child,
+              );
+            },
+            child: Row(
+              children: [
+                // Sidebar
+                SidebarMenu(
+                  selectedIndex: _selectedMenuIndex,
+                  onItemSelected: _handleMenuTap,
+              onLogout: _logout,
+            ),
+            
+            // Main content
+            Expanded(
+              child: Column(
+                children: [
+                  // Header
+                  _buildHeader(),
+                  
+                  // Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Search result or dashboard
+                          if (_showSearchResult)
+                            _buildSearchResult()
+                          else
+                            _buildDashboard(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+          ),
+          // Blinking Logo at bottom center
+          Positioned(
+            bottom: 18,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const LogoMenuScreen(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                              CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutCubic,
+                              ),
+                            ),
+                            child: child,
+                          ),
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 400),
+                    ),
+                  );
+                },
+                child: AnimatedBuilder(
+                  animation: _logoBlinkController,
+                  builder: (context, child) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.goldColor.withOpacity(
+                              0.18 + (_logoBlinkController.value * 0.25),
+                            ),
+                            blurRadius: 14 + (_logoBlinkController.value * 18),
+                            spreadRadius: 1 + (_logoBlinkController.value * 4),
+                          ),
+                          BoxShadow(
+                            color: AppTheme.primaryColor.withOpacity(
+                              0.10 + (_logoBlinkController.value * 0.12),
+                            ),
+                            blurRadius: 18 + (_logoBlinkController.value * 12),
+                            spreadRadius: 0.5 + (_logoBlinkController.value * 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(58),
+                        child: Image.asset(
+                          'assets/images/justice_logo.png',
+                          width: 66,
+                          height: 66,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+          // Minimized browsers bar
+          if (_minimizedBrowsers.isNotEmpty)
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: _buildMinimizedBrowsersBar(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverviewSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 980;
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(flex: 4, child: _buildLoginInfoCard()),
+              const SizedBox(width: 24),
+              Flexible(flex: 8, child: _buildSearchSection()),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            _buildLoginInfoCard(),
+            const SizedBox(height: 24),
+            _buildSearchSection(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCommandCenterSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 980;
+
+        final commandCenter = FadeInUp(
+          delay: const Duration(milliseconds: 200),
+          child: GlassmorphicContainer(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: AppTheme.primaryGradient,
+                      ),
+                      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Komuta Merkezi',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white.withOpacity(0.95),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(0.10)),
+                      ),
+                      child: Text(
+                        'TC ile anında erişim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.75),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _buildQuickLinkChip(
+                      label: 'e-Devlet',
+                      icon: Icons.account_balance,
+                      color: const Color(0xFFE30A17),
+                      url: 'https://www.turkiye.gov.tr/',
+                    ),
+                    _buildQuickLinkChip(
+                      label: 'UYAP',
+                      icon: Icons.gavel,
+                      color: const Color(0xFF1565C0),
+                      url: 'https://vatandas.uyap.gov.tr/main/vatandas/giris.jsp',
+                    ),
+                    _buildQuickLinkChip(
+                      label: 'GİB',
+                      icon: Icons.receipt_long,
+                      color: const Color(0xFF2E7D32),
+                      url: 'https://dijital.gib.gov.tr/',
+                    ),
+                    _buildQuickLinkChip(
+                      label: 'Yargıtay',
+                      icon: Icons.balance,
+                      color: const Color(0xFF8B0000),
+                      url: 'https://www.yargitay.gov.tr/',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (isWide)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SearchTextField(
+                          controller: _searchController,
+                          hintText: 'TC Kimlik Numarası Girin...',
+                          onSubmitted: _searchClient,
+                          onClear: () {
+                            setState(() {
+                              _showSearchResult = false;
+                              _searchResult = null;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      NeonButton(
+                        onPressed: _isSearching
+                            ? null
+                            : () => _searchClient(_searchController.text),
+                        label: 'Ara',
+                        icon: Icons.search,
+                        color: AppTheme.goldColor,
+                        isLoading: _isSearching,
+                        width: 160,
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      SearchTextField(
+                        controller: _searchController,
+                        hintText: 'TC Kimlik Numarası Girin...',
+                        onSubmitted: _searchClient,
+                        onClear: () {
+                          setState(() {
+                            _showSearchResult = false;
+                            _searchResult = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: NeonButton(
+                          onPressed: _isSearching
+                              ? null
+                              : () => _searchClient(_searchController.text),
+                          label: 'Ara',
+                          icon: Icons.search,
+                          color: AppTheme.goldColor,
+                          isLoading: _isSearching,
+                          width: 160,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        );
+
+        if (!isWide) {
+          return Column(
+            children: [
+              commandCenter,
+              const SizedBox(height: 18),
+              _buildLoginInfoCard(),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(flex: 8, child: commandCenter),
+            const SizedBox(width: 24),
+            Flexible(flex: 4, child: _buildLoginInfoCard()),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactTopSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 980;
+
+        final searchAndLinks = FadeInUp(
+          delay: const Duration(milliseconds: 150),
+          child: GlassmorphicContainer(
+            padding: const EdgeInsets.all(14),
+            child: isWide
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: SearchTextField(
+                          controller: _searchController,
+                          dense: true,
+                          hintText: 'TC Kimlik Numarası...',
+                          onSubmitted: _searchClient,
+                          onClear: () {
+                            setState(() {
+                              _showSearchResult = false;
+                              _searchResult = null;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      NeonButton(
+                        onPressed: _isSearching
+                            ? null
+                            : () => _searchClient(_searchController.text),
+                        label: 'Ara',
+                        icon: Icons.search,
+                        color: AppTheme.goldColor,
+                        isLoading: _isSearching,
+                        width: 110,
+                        height: 42,
+                        borderRadius: 12,
+                        fontSize: 14,
+                        iconSize: 18,
+                        letterSpacing: 0.5,
+                      ),
+                      const SizedBox(width: 10),
+                      _compactLinkButton(
+                        tooltip: 'e-Devlet',
+                        icon: Icons.account_balance,
+                        color: const Color(0xFFE30A17),
+                        url: 'https://www.turkiye.gov.tr/',
+                        title: 'e-Devlet',
+                      ),
+                      const SizedBox(width: 8),
+                      _compactLinkButton(
+                        tooltip: 'UYAP',
+                        icon: Icons.gavel,
+                        color: const Color(0xFF1565C0),
+                        url: 'https://vatandas.uyap.gov.tr/main/vatandas/giris.jsp',
+                        title: 'UYAP',
+                      ),
+                      const SizedBox(width: 8),
+                      _compactLinkButton(
+                        tooltip: 'GİB',
+                        icon: Icons.receipt_long,
+                        color: const Color(0xFF2E7D32),
+                        url: 'https://dijital.gib.gov.tr/',
+                        title: 'GİB - Dijital Vergi Dairesi',
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      SearchTextField(
+                        controller: _searchController,
+                        dense: true,
+                        hintText: 'TC Kimlik Numarası...',
+                        onSubmitted: _searchClient,
+                        onClear: () {
+                          setState(() {
+                            _showSearchResult = false;
+                            _searchResult = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: NeonButton(
+                              onPressed: _isSearching
+                                  ? null
+                                  : () => _searchClient(_searchController.text),
+                              label: 'Ara',
+                              icon: Icons.search,
+                              color: AppTheme.goldColor,
+                              isLoading: _isSearching,
+                              height: 42,
+                              borderRadius: 12,
+                              fontSize: 14,
+                              iconSize: 18,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          _compactLinkButton(
+                            tooltip: 'e-Devlet',
+                            icon: Icons.account_balance,
+                            color: const Color(0xFFE30A17),
+                            url: 'https://www.turkiye.gov.tr/',
+                            title: 'e-Devlet',
+                          ),
+                          const SizedBox(width: 8),
+                          _compactLinkButton(
+                            tooltip: 'UYAP',
+                            icon: Icons.gavel,
+                            color: const Color(0xFF1565C0),
+                            url: 'https://vatandas.uyap.gov.tr/main/vatandas/giris.jsp',
+                            title: 'UYAP',
+                          ),
+                          const SizedBox(width: 8),
+                          _compactLinkButton(
+                            tooltip: 'GİB',
+                            icon: Icons.receipt_long,
+                            color: const Color(0xFF2E7D32),
+                            url: 'https://dijital.gib.gov.tr/',
+                            title: 'GİB - Dijital Vergi Dairesi',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+        );
+
+        final login = FadeInDown(
+          child: GlassmorphicContainer(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: AppTheme.goldGradient,
+                    border: Border.all(color: Colors.white.withOpacity(0.10)),
+                  ),
+                  child: const Icon(Icons.access_time, color: Colors.white, size: 16),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Giriş',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white.withOpacity(0.92),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Son: ${_formatDateTime(_lastLogin)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.70),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.neonGreen,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.neonGreen.withOpacity(
+                              0.15 + (_pulseController.value * 0.10),
+                            ),
+                            blurRadius: 4 + (_pulseController.value * 5),
+                            spreadRadius: 0.2 + (_pulseController.value * 0.8),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Aktif',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.75),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        if (!isWide) {
+          return Column(
+            children: [
+              searchAndLinks,
+              const SizedBox(height: 12),
+              login,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 8, child: searchAndLinks),
+            const SizedBox(width: 14),
+            Expanded(flex: 4, child: login),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _compactLinkButton({
+    required String tooltip,
+    required IconData icon,
+    required Color color,
+    required String url,
+    required String title,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: () => _openWebView(url: url, title: title, color: color),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickLinkChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required String url,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          _openWebView(
+            url: url,
+            title: label == 'GİB' ? 'GİB - Dijital Vergi Dairesi' : label,
+            color: color,
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildMinimizedBrowsersBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: _minimizedBrowsers.map((browser) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: _buildMinimizedBrowserItem(browser),
+          );
+        }).toList(),
+      ),
+    );
+  }
+  
+  Widget _buildMinimizedBrowserItem(MinimizedBrowser browser) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => _restoreMinimizedBrowser(browser),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: browser.themeColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: browser.themeColor.withOpacity(0.5), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: browser.themeColor.withOpacity(0.2),
+                blurRadius: 4,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getIconForBrowser(browser.title),
+                color: browser.themeColor,
+                size: 14,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                browser.title.length > 8 
+                    ? '${browser.title.substring(0, 8)}...' 
+                    : browser.title,
+                style: TextStyle(
+                  color: browser.themeColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () => _closeMinimizedBrowser(browser),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.red.shade400,
+                    size: 10,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  IconData _getIconForBrowser(String title) {
+    switch (title) {
+      case 'e-Devlet':
+        return Icons.account_balance;
+      case 'UYAP':
+        return Icons.gavel;
+      case 'GİB - Dijital Vergi Dairesi':
+        return Icons.receipt_long;
+      default:
+        return Icons.language;
+    }
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.surfaceColor.withOpacity(0.70),
+            AppTheme.cardColor.withOpacity(0.28),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withOpacity(0.08),
+          ),
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 980;
+
+          return Row(
+            children: [
+              FadeInLeft(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white.withOpacity(0.06),
+                        border: Border.all(color: Colors.white.withOpacity(0.10)),
+                      ),
+                      child: const Icon(
+                        Icons.balance,
+                        color: AppTheme.goldColor,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Avukat Portal',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                        if (isWide)
+                          Text(
+                            'Müvekkil Yönetim Sistemi',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.55),
+                              height: 1.1,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: SearchTextField(
+                  controller: _searchController,
+                  dense: true,
+                  hintText: 'TC Kimlik Numarası...',
+                  onSubmitted: _searchClient,
+                  onClear: () {
+                    setState(() {
+                      _showSearchResult = false;
+                      _searchResult = null;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              NeonButton(
+                onPressed:
+                    _isSearching ? null : () => _searchClient(_searchController.text),
+                label: 'Ara',
+                icon: Icons.search,
+                color: AppTheme.goldColor,
+                isLoading: _isSearching,
+                width: 96,
+                height: 40,
+                borderRadius: 12,
+                fontSize: 13,
+                iconSize: 18,
+                letterSpacing: 0.4,
+              ),
+              const SizedBox(width: 10),
+              NeonButton(
+                onPressed: () async {
+                  final result = await Navigator.push<bool>(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const AddClientScreen(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1, 0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 400),
+                    ),
+                  );
+                  if (result == true && mounted) {
+                    setState(() {});
+                  }
+                },
+                label: 'Yeni Müvekkil',
+                icon: Icons.person_add,
+                color: AppTheme.neonGreen,
+                width: 130,
+                height: 40,
+                borderRadius: 12,
+                fontSize: 13,
+                iconSize: 18,
+                letterSpacing: 0.4,
+              ),
+              const SizedBox(width: 10),
+              _toolbarLinkIcon(
+                tooltip: 'e-Devlet',
+                icon: Icons.account_balance,
+                color: const Color(0xFFE30A17),
+                url: 'https://www.turkiye.gov.tr/',
+                title: 'e-Devlet',
+              ),
+              const SizedBox(width: 8),
+              _toolbarLinkIcon(
+                tooltip: 'UYAP',
+                icon: Icons.gavel,
+                color: const Color(0xFF1565C0),
+                url: 'https://vatandas.uyap.gov.tr/main/vatandas/giris.jsp',
+                title: 'UYAP',
+              ),
+              const SizedBox(width: 8),
+              _toolbarLinkIcon(
+                tooltip: 'GİB',
+                icon: Icons.receipt_long,
+                color: const Color(0xFF2E7D32),
+                url: 'https://dijital.gib.gov.tr/',
+                title: 'GİB - Dijital Vergi Dairesi',
+              ),
+              const SizedBox(width: 10),
+              _toolbarIconButton(
+                icon: Icons.notifications_outlined,
+                tooltip: 'Bildirimler',
+                onPressed: () {},
+              ),
+              const SizedBox(width: 8),
+              _toolbarIconButton(
+                icon: Icons.settings_outlined,
+                tooltip: 'Ayarlar',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 10),
+              _activeChip(),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _toolbarIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+          ),
+          child: Icon(icon, color: Colors.white.withOpacity(0.85), size: 18),
+        ),
+      ),
+    );
+  }
+
+  Widget _toolbarLinkIcon({
+    required String tooltip,
+    required IconData icon,
+    required Color color,
+    required String url,
+    required String title,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: () => _openWebView(url: url, title: title, color: color),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
+      ),
+    );
+  }
+
+  Widget _activeChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: AppTheme.neonGreen,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Aktif',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withOpacity(0.85),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 45,
+          height: 45,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+          ),
+          child: Icon(icon, color: Colors.white.withOpacity(0.85), size: 20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickLinkButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required String url,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          _openWebView(
+            url: url,
+            title: label == 'GİB' ? 'GİB - Dijital Vergi Dairesi' : label,
+            color: color,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.10), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 10,
+                spreadRadius: 0.5,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _openWebView({
+    required String url,
+    required String title,
+    required Color color,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WebViewScreen(
+          url: url,
+          title: title,
+          themeColor: color,
+          onMinimize: (minimized) {
+            _addMinimizedBrowser(minimized);
+          },
+        ),
+      ),
+    );
+  }
+  
+  void _restoreMinimizedBrowser(MinimizedBrowser browser) {
+    setState(() {
+      _minimizedBrowsers.removeWhere((b) => b.title == browser.title);
+    });
+    _openWebView(
+      url: browser.currentUrl,
+      title: browser.title,
+      color: browser.themeColor,
+    );
+  }
+  
+  void _closeMinimizedBrowser(MinimizedBrowser browser) {
+    setState(() {
+      _minimizedBrowsers.removeWhere((b) => b.title == browser.title);
+    });
+  }
+
+  Widget _buildLoginInfoCard() {
+    return FadeInDown(
+      child: GlassmorphicContainer(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: AppTheme.goldGradient,
+                    border: Border.all(color: Colors.white.withOpacity(0.10)),
+                  ),
+                  child: const Icon(Icons.access_time, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Giriş Bilgileri',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(0.10)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.neonGreen,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.neonGreen.withOpacity(
+                                    0.15 + (_pulseController.value * 0.15),
+                                  ),
+                                  blurRadius: 4 + (_pulseController.value * 6),
+                                  spreadRadius: 0.5 + (_pulseController.value * 1.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Aktif',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _infoRow(
+              icon: Icons.login,
+              iconColor: AppTheme.neonGreen,
+              label: 'Son Giriş',
+              value: _formatDateTime(_lastLogin),
+            ),
+            const SizedBox(height: 10),
+            _infoRow(
+              icon: Icons.logout,
+              iconColor: AppTheme.neonOrange,
+              label: 'Son Çıkış',
+              value: _formatDateTime(_lastLogout),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: iconColor.withOpacity(0.95)),
+        const SizedBox(width: 10),
+        Text(
+          '$label:',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.60),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.82),
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchSection() {
+    return FadeInUp(
+      delay: const Duration(milliseconds: 200),
+      child: GlassmorphicContainer(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: AppTheme.primaryGradient,
+                  ),
+                  child: const Icon(Icons.search, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 15),
+                const Text(
+                  'Müvekkil Ara',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SearchTextField(
+              controller: _searchController,
+              hintText: 'TC Kimlik Numarası Girin...',
+              onSubmitted: _searchClient,
+              onClear: () {
+                setState(() {
+                  _showSearchResult = false;
+                  _searchResult = null;
+                });
+              },
+            ),
+            const SizedBox(height: 14),
+            Align(
+              alignment: Alignment.centerRight,
+              child: NeonButton(
+                onPressed:
+                    _isSearching ? null : () => _searchClient(_searchController.text),
+                label: 'Ara',
+                icon: Icons.search,
+                color: AppTheme.goldColor,
+                isLoading: _isSearching,
+                width: 140,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResult() {
+    if (_searchResult == null) {
+      return FadeInUp(
+        child: GlassmorphicContainer(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            children: [
+              Icon(
+                Icons.person_off,
+                size: 80,
+                color: Colors.white.withOpacity(0.3),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Müvekkil Bulunamadı',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Bu TC kimlik numarasına kayıtlı müvekkil bulunmamaktadır.',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                ),
+              ),
+              const SizedBox(height: 30),
+              NeonButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddClientScreen(
+                        initialTcNo: _searchController.text,
+                      ),
+                    ),
+                  );
+                },
+                label: 'Yeni Müvekkil Ekle',
+                icon: Icons.person_add,
+                color: AppTheme.neonGreen,
+                width: 200,
+              ),
+            ],
+          ),
+        )
+            .animate()
+            .fadeIn(duration: const Duration(milliseconds: 500))
+            .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1)),
+      );
+    }
+
+    return FadeInUp(
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  ClientDetailScreen(clientData: _searchResult!),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.1, 0),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    )),
+                    child: child,
+                  ),
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 500),
+            ),
+          );
+        },
+        child: AnimatedGlassmorphicContainer(
+          glowColor: AppTheme.neonGreen,
+          padding: const EdgeInsets.all(25),
+          child: Row(
+            children: [
+              // Photo
+              Hero(
+                tag: 'client_photo_${_searchResult!['id']}',
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    gradient: AppTheme.primaryGradient,
+                    boxShadow: AppTheme.glowingShadow(AppTheme.primaryColor),
+                  ),
+                  child: _searchResult!['photo_url'] != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.network(
+                            _searchResult!['photo_url'],
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.white,
+                        ),
+                ),
+              ),
+              const SizedBox(width: 25),
+              
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_searchResult!['first_name']} ${_searchResult!['last_name']}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.badge, size: 16, color: AppTheme.neonBlue),
+                        const SizedBox(width: 8),
+                        Text(
+                          'TC: ${_searchResult!['tc_no']}',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.phone, size: 16, color: AppTheme.neonGreen),
+                        const SizedBox(width: 8),
+                        Text(
+                          _searchResult!['phone_number'] ?? '-',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Amount info
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Anlaşılan',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                  Text(
+                    '${NumberFormat('#,###').format(_searchResult!['agreed_amount'] ?? 0)} ₺',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.goldColor,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Kalan',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                  Text(
+                    '${NumberFormat('#,###').format((_searchResult!['agreed_amount'] ?? 0) - (_searchResult!['paid_amount'] ?? 0))} ₺',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.neonOrange,
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(width: 20),
+              
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+      )
+          .animate()
+          .fadeIn(duration: const Duration(milliseconds: 600))
+          .slideX(begin: 0.1, end: 0)
+          .then()
+          .shimmer(
+            duration: const Duration(seconds: 2),
+            color: AppTheme.goldColor.withOpacity(0.3),
+          ),
+    );
+  }
+
+  Widget _buildDashboard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FadeInUp(
+          delay: const Duration(milliseconds: 300),
+          child: const Text(
+            'Hızlı Erişim',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FadeInUp(
+          delay: const Duration(milliseconds: 360),
+          child: GlassmorphicContainer(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Column(
+              children: [
+                _buildQuickAccessRow(
+                  title: 'Müvekkiller',
+                  icon: Icons.people,
+                  color: AppTheme.neonBlue,
+                  count: _clientCount.toString(),
+                  onTap: () => _handleMenuTap(1),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'Yaklaşan Duruşmalar',
+                  icon: Icons.gavel,
+                  color: AppTheme.neonPurple,
+                  count: '3',
+                  onTap: () => _handleMenuTap(2),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'Mali İşler',
+                  icon: Icons.payments,
+                  color: AppTheme.neonOrange,
+                  count: '8',
+                  onTap: () => _handleMenuTap(3),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'Talepler',
+                  icon: Icons.assignment,
+                  color: AppTheme.neonGreen,
+                  count: '5',
+                  onTap: () => _showComingSoon('Talepler'),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'Resmi Evraklar',
+                  icon: Icons.description,
+                  color: AppTheme.goldColor,
+                  count: '12',
+                  onTap: () => _handleMenuTap(7),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'İçtihat ve Mevzuat',
+                  icon: Icons.gavel,
+                  color: AppTheme.neonBlue,
+                  count: '0',
+                  onTap: () => _showComingSoon('İçtihat ve Mevzuat'),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'Şablon Kütüphanesi',
+                  icon: Icons.description,
+                  color: AppTheme.neonGreen,
+                  count: '0',
+                  onTap: () => _showComingSoon('Şablon Kütüphanesi'),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'PDF Düzenleme',
+                  icon: Icons.picture_as_pdf,
+                  color: AppTheme.neonOrange,
+                  count: '0',
+                  onTap: () => _showComingSoon('PDF Düzenleme'),
+                ),
+                _rowDivider(),
+                _buildQuickAccessRow(
+                  title: 'E-posta Yönetimi',
+                  icon: Icons.mail,
+                  color: AppTheme.neonPurple,
+                  count: '0',
+                  onTap: () => _showComingSoon('E-posta Yönetimi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _rowDivider() {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      color: Colors.white.withOpacity(0.06),
+    );
+  }
+
+  Widget _buildQuickAccessRow({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required String count,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white.withOpacity(0.05),
+                border: Border.all(color: Colors.white.withOpacity(0.10)),
+              ),
+              child: Icon(icon, color: color.withOpacity(0.95), size: 16),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white.withOpacity(0.90),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.95),
+                    AppTheme.goldColor.withOpacity(0.65),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              count,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withOpacity(0.35),
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKpiCompactCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required String count,
+    required int delay,
+  }) {
+    return FadeInUp(
+      delay: Duration(milliseconds: 320 + (delay * 90)),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            // Navigate to respective screen
+          },
+          child: GlassmorphicContainer(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withOpacity(0.06),
+                    border: Border.all(color: Colors.white.withOpacity(0.10)),
+                  ),
+                  child: Icon(icon, color: color.withOpacity(0.95), size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white.withOpacity(0.90),
+                          height: 1.1,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 4,
+                        width: 54,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          gradient: LinearGradient(
+                            colors: [
+                              color.withOpacity(0.95),
+                              AppTheme.goldColor.withOpacity(0.70),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  count,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAccessCard(
+    String title,
+    IconData icon,
+    Color color,
+    String count,
+    int delay,
+  ) {
+    return FadeInUp(
+      delay: Duration(milliseconds: 400 + (delay * 100)),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            // Navigate to respective screen
+          },
+          child: GlassmorphicContainer(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        color: Colors.white.withOpacity(0.06),
+                        border: Border.all(color: Colors.white.withOpacity(0.10)),
+                      ),
+                      child: Icon(icon, color: color.withOpacity(0.95), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withOpacity(0.92),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.white.withOpacity(0.35),
+                      size: 20,
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        count,
+                        style: const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                          letterSpacing: -0.2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      height: 8,
+                      width: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            color.withOpacity(0.9),
+                            AppTheme.goldColor.withOpacity(0.75),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  height: 1,
+                  width: double.infinity,
+                  color: Colors.white.withOpacity(0.08),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDateTime(String? isoString) {
+    if (isoString == null) return '-';
+    try {
+      final dt = DateTime.parse(isoString);
+      return DateFormat('dd.MM.yyyy HH:mm').format(dt);
+    } catch (e) {
+      return isoString;
+    }
+  }
+}

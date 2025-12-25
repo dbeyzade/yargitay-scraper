@@ -1,0 +1,1354 @@
+import 'package:flutter/material.dart';
+import 'package:animate_do/animate_do.dart';
+import '../theme/app_theme.dart';
+import '../widgets/glassmorphic_container.dart';
+import '../widgets/neon_button.dart';
+
+class LegalCategoryDetailScreen extends StatefulWidget {
+  final String categoryName;
+  
+  const LegalCategoryDetailScreen({
+    super.key,
+    required this.categoryName,
+  });
+
+  @override
+  State<LegalCategoryDetailScreen> createState() => _LegalCategoryDetailScreenState();
+}
+
+class _LegalCategoryDetailScreenState extends State<LegalCategoryDetailScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _backgroundController;
+  int _selectedTab = 0;
+  
+  // Kategori bilgileri
+  Map<String, dynamic> get categoryData => _getCategoryData(widget.categoryName);
+  
+  // Dinamik renk - kategoriye göre
+  Color get categoryColor {
+    final colors = [
+      AppTheme.neonBlue,
+      AppTheme.neonGreen,
+      AppTheme.neonPurple,
+      AppTheme.neonOrange,
+      AppTheme.goldColor,
+      AppTheme.neonPink,
+    ];
+    return colors[widget.categoryName.hashCode % colors.length];
+  }
+  
+  // Dinamik emoji - kategoriye göre
+  String get categoryEmoji {
+    final emojis = {
+      'Ceza Davaları': '⚖️',
+      'Boşanma Davaları': '💔',
+      'İş Davaları': '💼',
+      'Tazminat Davaları': '💰',
+      'Gayrimenkul Davaları': '🏠',
+      'İcra İflas Davaları': '📜',
+      'Ticaret Hukuku Davaları': '🏢',
+      'Tüketici Davaları': '🛒',
+    };
+    return emojis[widget.categoryName] ?? '⚖️';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _backgroundController = AnimationController(
+      duration: const Duration(seconds: 10),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _backgroundController.dispose();
+    super.dispose();
+  }
+
+  Map<String, dynamic> _getCategoryData(String category) {
+    final data = {
+      // ANA DAV A KATEGORİLERİ
+      'Ceza Davaları': {
+        'description': 'Ceza hukuku kapsamındaki tüm dava türleri',
+        'subcategories': [
+          {
+            'title': 'Kasten Öldürme',
+            'icon': Icons.dangerous,
+            'items': ['Basit kasten öldürme', 'Nitelikli kasten öldürme', 'Tasarlayarak öldürme'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şüpheli/Sanık/Mağdur', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Suçun İşlendiği Tarih', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Olay Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Mahkeme Adı', 'type': 'text', 'icon': Icons.account_balance},
+              {'name': 'Dosya No', 'type': 'text', 'icon': Icons.folder},
+              {'name': 'Duruşma Tarihi', 'type': 'date', 'icon': Icons.gavel},
+              {'name': 'Tanık Listesi', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Deliller', 'type': 'file', 'icon': Icons.attach_file},
+            ],
+          },
+          {
+            'title': 'Kasten Yaralama',
+            'icon': Icons.local_hospital,
+            'items': ['Basit yaralama', 'Nitelikli yaralama', 'Silahla yaralama'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Yaralanan/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Yaralanma Derecesi', 'type': 'dropdown', 'icon': Icons.medical_services},
+              {'name': 'Sağlık Raporu', 'type': 'file', 'icon': Icons.file_present},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+            ],
+          },
+          {
+            'title': 'Hırsızlık/Dolandırıcılık',
+            'icon': Icons.lock_open,
+            'items': ['Hırsızlık', 'Nitelikli hırsızlık', 'Dolandırıcılık'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Çalınan Eşya/Zarar', 'type': 'longtext', 'icon': Icons.list},
+              {'name': 'Tahmini Değer', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Olay Tarihi', 'type': 'datetime', 'icon': Icons.access_time},
+              {'name': 'Güvenlik Kamerası', 'type': 'file', 'icon': Icons.videocam},
+            ],
+          },
+        ],
+      },
+      
+      'Boşanma Davaları': {
+        'description': 'Boşanma, mal paylaşımı, velayet ve nafaka davaları',
+        'subcategories': [
+          {
+            'title': 'Anlaşmalı Boşanma',
+            'icon': Icons.handshake,
+            'items': ['Anlaşmalı boşanma protokolü', 'Mal paylaşımı', 'Velayet anlaşması'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Eş Adı Soyadı', 'type': 'text', 'icon': Icons.people},
+              {'name': 'Evlilik Tarihi', 'type': 'date', 'icon': Icons.favorite},
+              {'name': 'Çocuk Sayısı', 'type': 'number', 'icon': Icons.child_care},
+              {'name': 'Çocukların Yaşları', 'type': 'text', 'icon': Icons.cake},
+              {'name': 'Ortak Mal Varlığı', 'type': 'longtext', 'icon': Icons.home},
+              {'name': 'Nafaka Talebi', 'type': 'dropdown', 'icon': Icons.attach_money},
+              {'name': 'Velayet Tercihi', 'type': 'dropdown', 'icon': Icons.family_restroom},
+              {'name': 'Evlilik Cüzdanı', 'type': 'file', 'icon': Icons.description},
+            ],
+          },
+          {
+            'title': 'Çekişmeli Boşanma',
+            'icon': Icons.gavel,
+            'items': ['Boşanma nedenleri', 'Kusur tespiti', 'Maddi manevi tazminat'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Eş Adı Soyadı', 'type': 'text', 'icon': Icons.people},
+              {'name': 'Boşanma Nedeni', 'type': 'dropdown', 'icon': Icons.report},
+              {'name': 'Olay Açıklaması', 'type': 'longtext', 'icon': Icons.description},
+              {'name': 'Tanık Listesi', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Deliller (Mesaj, Fotoğraf)', 'type': 'file', 'icon': Icons.attach_file},
+              {'name': 'Tazminat Talebi', 'type': 'number', 'icon': Icons.money},
+            ],
+          },
+          {
+            'title': 'Velayet Davası',
+            'icon': Icons.child_care,
+            'items': ['Velayetin tespiti', 'Velayet değişikliği', 'Çocukla kişisel ilişki'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Çocuk Adı', 'type': 'text', 'icon': Icons.child_friendly},
+              {'name': 'Çocuk Yaşı', 'type': 'number', 'icon': Icons.cake},
+              {'name': 'Velayet Talebi Gerekçesi', 'type': 'longtext', 'icon': Icons.article},
+              {'name': 'Yaşam Koşulları', 'type': 'longtext', 'icon': Icons.home_work},
+              {'name': 'Okul Bilgileri', 'type': 'text', 'icon': Icons.school},
+              {'name': 'Sosyal İnceleme Raporu', 'type': 'file', 'icon': Icons.assignment},
+            ],
+          },
+          {
+            'title': 'Nafaka Davası',
+            'icon': Icons.attach_money,
+            'items': ['İştirak nafakası', 'Yoksulluk nafakası', 'Tedbir nafakası'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Nafaka Türü', 'type': 'dropdown', 'icon': Icons.category},
+              {'name': 'Talep Edilen Miktar', 'type': 'number', 'icon': Icons.money},
+              {'name': 'Gelir Durumu', 'type': 'longtext', 'icon': Icons.account_balance_wallet},
+              {'name': 'Gider Listesi', 'type': 'longtext', 'icon': Icons.receipt_long},
+              {'name': 'Maaş Bordrosu', 'type': 'file', 'icon': Icons.receipt},
+            ],
+          },
+        ],
+      },
+      
+      'İş Davaları': {
+        'description': 'İşçi-işveren arasındaki uyuşmazlıklar',
+        'subcategories': [
+          {
+            'title': 'İşe İade Davası',
+            'icon': Icons.work,
+            'items': ['Haksız fesih', 'İşe iade talebi', 'Tazminat'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'İşveren Unvanı', 'type': 'text', 'icon': Icons.business},
+              {'name': 'İşe Giriş Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'İşten Çıkış Tarihi', 'type': 'date', 'icon': Icons.event_busy},
+              {'name': 'Fesih Gerekçesi', 'type': 'longtext', 'icon': Icons.description},
+              {'name': 'Son Maaş', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'İş Sözleşmesi', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Fesih Bildirim Yazısı', 'type': 'file', 'icon': Icons.mail},
+            ],
+          },
+          {
+            'title': 'Alacak ve Tazminat Davası',
+            'icon': Icons.money_off,
+            'items': ['Kıdem tazminatı', 'İhbar tazminatı', 'Fazla mesai'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Talep Edilen Alacak Türü', 'type': 'dropdown', 'icon': Icons.category},
+              {'name': 'Alacak Miktarı', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Çalışma Süresi', 'type': 'text', 'icon': Icons.schedule},
+              {'name': 'Maaş Bordroları', 'type': 'file', 'icon': Icons.receipt_long},
+            ],
+          },
+          {
+            'title': 'İş Kazası ve Meslek Hastalığı',
+            'icon': Icons.health_and_safety,
+            'items': ['İş kazası', 'Meslek hastalığı', 'İşveren kusuru'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Kaza Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Kaza Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Kaza Tutanağı', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Sağlık Kurulu Raporu', 'type': 'file', 'icon': Icons.medical_services},
+              {'name': 'İş Göremezlik Oranı', 'type': 'text', 'icon': Icons.percent},
+            ],
+          },
+        ],
+      },
+      
+      'Tazminat Davaları': {
+        'description': 'Maddi ve manevi tazminat talepleri',
+        'subcategories': [
+          {
+            'title': 'Trafik Kazası Tazminatı',
+            'icon': Icons.directions_car,
+            'items': ['Maddi tazminat', 'Manevi tazminat', 'Destekten yoksun kalma'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Kaza Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Kaza Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Kaza Tespit Tutanağı', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Sağlık Raporu', 'type': 'file', 'icon': Icons.medical_services},
+              {'name': 'Araç Hasar Fotoğrafları', 'type': 'file', 'icon': Icons.photo_camera},
+              {'name': 'Sigorta Bilgileri', 'type': 'text', 'icon': Icons.security},
+              {'name': 'Talep Edilen Miktar', 'type': 'number', 'icon': Icons.attach_money},
+            ],
+          },
+          {
+            'title': 'Manevi Tazminat',
+            'icon': Icons.sentiment_very_dissatisfied,
+            'items': ['Kişilik hakları ihlali', 'Hakaret', 'Özel hayatın gizliliği'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Olay Açıklaması', 'type': 'longtext', 'icon': Icons.description},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Deliller', 'type': 'file', 'icon': Icons.attach_file},
+              {'name': 'Talep Edilen Tazminat', 'type': 'number', 'icon': Icons.attach_money},
+            ],
+          },
+          {
+            'title': 'Maddi Tazminat',
+            'icon': Icons.price_check,
+            'items': ['Taşınır zararı', 'Taşınmaz zararı', 'Gelir kaybı'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Zarar Konusu', 'type': 'longtext', 'icon': Icons.inventory},
+              {'name': 'Zarar Miktarı', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Ekspertiz Raporu', 'type': 'file', 'icon': Icons.assignment},
+              {'name': 'Faturalar', 'type': 'file', 'icon': Icons.receipt},
+            ],
+          },
+        ],
+      },
+      
+      'Gayrimenkul Davaları': {
+        'description': 'Taşınmaz mal ile ilgili uyuşmazlıklar',
+        'subcategories': [
+          {
+            'title': 'Tapu İptali ve Tescil',
+            'icon': Icons.home,
+            'items': ['Tapu iptali', 'Tescil davası', 'Sahtecilik iddiası'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Taşınmaz Adresi', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Ada/Parsel', 'type': 'text', 'icon': Icons.map},
+              {'name': 'Tapu Kaydı', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Alım Belgesi', 'type': 'file', 'icon': Icons.receipt},
+              {'name': 'İmar Durumu', 'type': 'text', 'icon': Icons.apartment},
+            ],
+          },
+          {
+            'title': 'İstihkak (Mülkiyet) Davası',
+            'icon': Icons.verified,
+            'items': ['Taşınmaz istihkakı', 'Taşınır istihkakı'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Taşınmaz Bilgileri', 'type': 'longtext', 'icon': Icons.home},
+              {'name': 'Malik Bilgileri', 'type': 'text', 'icon': Icons.person_outline},
+              {'name': 'Tapu Belgesi', 'type': 'file', 'icon': Icons.description},
+            ],
+          },
+          {
+            'title': 'Ortaklığın Giderilmesi',
+            'icon': Icons.group_remove,
+            'items': ['Paylı mülkiyetin sona erdirilmesi', 'Payların satışı'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Paydaş Listesi', 'type': 'longtext', 'icon': Icons.people},
+              {'name': 'Paylar', 'type': 'text', 'icon': Icons.pie_chart},
+              {'name': 'Tapu Kaydı', 'type': 'file', 'icon': Icons.description},
+            ],
+          },
+        ],
+      },
+      
+      'İcra İflas Davaları': {
+        'description': 'Borç tahsili ve iflas süreçleri',
+        'subcategories': [
+          {
+            'title': 'İlamlı İcra Takibi',
+            'icon': Icons.gavel,
+            'items': ['Mahkeme kararının icrası', 'Haciz', 'Borçlunun malvarlığı'],
+            'requiredFields': [
+              {'name': 'Alacaklı Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Borçlu Adı Soyadı', 'type': 'text', 'icon': Icons.person_outline},
+              {'name': 'Alacak Miktarı', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Mahkeme İlamı', 'type': 'file', 'icon': Icons.gavel},
+              {'name': 'İcra Dosya No', 'type': 'text', 'icon': Icons.folder},
+            ],
+          },
+          {
+            'title': 'İlamsız İcra Takibi',
+            'icon': Icons.receipt_long,
+            'items': ['Kambiyo senetleri', 'Çek-Senet takibi', 'İtiraz'],
+            'requiredFields': [
+              {'name': 'Alacaklı Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Borçlu Adı Soyadı', 'type': 'text', 'icon': Icons.person_outline},
+              {'name': 'Senet/Çek Tutarı', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Senet/Çek Fotokopisi', 'type': 'file', 'icon': Icons.document_scanner},
+              {'name': 'Vade Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+            ],
+          },
+          {
+            'title': 'İflas Davası',
+            'icon': Icons.trending_down,
+            'items': ['İflas talebı', 'Konkordato', 'İflasın ertelenmesi'],
+            'requiredFields': [
+              {'name': 'Talep Eden', 'type': 'text', 'icon': Icons.person},
+              {'name': 'İflas Nedenleri', 'type': 'longtext', 'icon': Icons.description},
+              {'name': 'Alacak Durumu', 'type': 'longtext', 'icon': Icons.account_balance},
+              {'name': 'Mali Tablolar', 'type': 'file', 'icon': Icons.table_chart},
+            ],
+          },
+        ],
+      },
+      
+      'Ticaret Hukuku Davaları': {
+        'description': 'Ticari işlemler ve şirketler arası uyuşmazlıklar',
+        'subcategories': [
+          {
+            'title': 'Şirketler Arası Uyuşmazlık',
+            'icon': Icons.business_center,
+            'items': ['Sözleşme ihlali', 'Haksız rekabet', 'Ticari alacak'],
+            'requiredFields': [
+              {'name': 'Müvekkil Şirket Unvanı', 'type': 'text', 'icon': Icons.business},
+              {'name': 'Karşı Taraf Unvanı', 'type': 'text', 'icon': Icons.corporate_fare},
+              {'name': 'Uyuşmazlık Konusu', 'type': 'longtext', 'icon': Icons.description},
+              {'name': 'Sözleşme', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Alacak Miktarı', 'type': 'number', 'icon': Icons.attach_money},
+            ],
+          },
+          {
+            'title': 'Ortaklık Uyuşmazlıkları',
+            'icon': Icons.groups,
+            'items': ['Ortaktan çıkarma', 'Kar payı', 'Yönetim kurulu kararları'],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şirket Unvanı', 'type': 'text', 'icon': Icons.business},
+              {'name': 'Ortaklık Oranı', 'type': 'text', 'icon': Icons.percent},
+              {'name': 'Uyuşmazlık Konusu', 'type': 'longtext', 'icon': Icons.topic},
+              {'name': 'Esas Sözleşme', 'type': 'file', 'icon': Icons.description},
+            ],
+          },
+          {
+            'title': 'Ticari Sözleşme Davaları',
+            'icon': Icons.handshake,
+            'items': ['Sözleşmenin iptali', 'Tazminat', 'İfa'],
+            'requiredFields': [
+              {'name': 'Müvekkil Unvanı', 'type': 'text', 'icon': Icons.business},
+              {'name': 'Sözleşme Konusu', 'type': 'longtext', 'icon': Icons.topic},
+              {'name': 'İhlal Edilen Madde', 'type': 'text', 'icon': Icons.rule},
+              {'name': 'Sözleşme Metni', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Yazışmalar', 'type': 'file', 'icon': Icons.email},
+            ],
+          },
+        ],
+      },
+      
+      'Tüketici Davaları': {
+        'description': 'Tüketici hakları ve ayıplı mal/hizmet davaları',
+        'subcategories': [
+          {
+            'title': 'Ayıplı Mal/Hizmet',
+            'icon': Icons.shopping_cart,
+            'items': ['Ürün iadesi', 'Değişim', 'İndirim'],
+            'requiredFields': [
+              {'name': 'Tüketici Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Satıcı/Hizmet Sağlayıcı', 'type': 'text', 'icon': Icons.store},
+              {'name': 'Ürün/Hizmet Açıklaması', 'type': 'longtext', 'icon': Icons.inventory},
+              {'name': 'Ayıp Türü', 'type': 'longtext', 'icon': Icons.error_outline},
+              {'name': 'Fatura', 'type': 'file', 'icon': Icons.receipt},
+              {'name': 'Garanti Belgesi', 'type': 'file', 'icon': Icons.verified},
+              {'name': 'Fotoğraflar', 'type': 'file', 'icon': Icons.photo_camera},
+            ],
+          },
+          {
+            'title': 'Cayma Hakkı',
+            'icon': Icons.undo,
+            'items': ['Mesafeli satış', 'Kapıda satış', 'İade talebi'],
+            'requiredFields': [
+              {'name': 'Tüketici Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Satıcı Firma', 'type': 'text', 'icon': Icons.business},
+              {'name': 'Sipariş Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Teslimat Tarihi', 'type': 'date', 'icon': Icons.local_shipping},
+              {'name': 'Cayma Bildirimi', 'type': 'file', 'icon': Icons.mail},
+              {'name': 'Fatura', 'type': 'file', 'icon': Icons.receipt},
+            ],
+          },
+          {
+            'title': 'Tazminat Talebi',
+            'icon': Icons.attach_money,
+            'items': ['Maddi tazminat', 'Manevi tazminat', 'Zarar-ziyan'],
+            'requiredFields': [
+              {'name': 'Tüketici Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Zarar Konusu', 'type': 'longtext', 'icon': Icons.description},
+              {'name': 'Talep Edilen Miktar', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Belgeler', 'type': 'file', 'icon': Icons.folder},
+            ],
+          },
+        ],
+      },
+      
+      // TCK KATEGORİLERİ (Eskıden kalma)
+      'Kişilere Karşı Suçlar': {
+        'description': 'Kişilerin yaşam, vücut bütünlüğü, onur ve özgürlüklerine karşı işlenen suçlar',
+        'subcategories': [
+          {
+            'title': 'Kasten Öldürme (TCK m.81-84)',
+            'icon': Icons.dangerous,
+            'items': [
+              'Basit kasten öldürme',
+              'Nitelikli kasten öldürme',
+              'Tasarlayarak öldürme',
+              'Canavarca hisle öldürme',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şüpheli/Sanık/Mağdur', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Suçun İşlendiği Tarih', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Olay Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'İddianame Tarihi', 'type': 'date', 'icon': Icons.description},
+              {'name': 'Mahkeme Adı', 'type': 'text', 'icon': Icons.account_balance},
+              {'name': 'Dosya No', 'type': 'text', 'icon': Icons.folder},
+              {'name': 'Duruşma Tarihi', 'type': 'date', 'icon': Icons.gavel},
+              {'name': 'Şikayetçi Beyanı', 'type': 'longtext', 'icon': Icons.speaker_notes},
+              {'name': 'Tanık Listesi', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Deliller', 'type': 'file', 'icon': Icons.attach_file},
+              {'name': 'Savunma Stratejisi', 'type': 'longtext', 'icon': Icons.shield},
+              {'name': 'Karar Sonucu', 'type': 'dropdown', 'icon': Icons.check_circle},
+              {'name': 'Temyiz Durumu', 'type': 'dropdown', 'icon': Icons.repeat},
+            ],
+          },
+          {
+            'title': 'Kasten Yaralama (TCK m.86-89)',
+            'icon': Icons.local_hospital,
+            'items': [
+              'Basit kasten yaralama',
+              'Neticesi sebebiyle ağırlaşmış yaralama',
+              'Kasten yaralamada cezayı ağırlaştıran haller',
+              'Silahla yaralama',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Yaralanan/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Olay Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Yaralanma Derecesi', 'type': 'dropdown', 'icon': Icons.medical_services},
+              {'name': 'Sağlık Raporu', 'type': 'file', 'icon': Icons.file_present},
+              {'name': 'Kullanılan Silah/Araç', 'type': 'text', 'icon': Icons.warning},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Fotoğraflar/Kamera Kayıtları', 'type': 'file', 'icon': Icons.photo_camera},
+              {'name': 'Mahkeme Bilgileri', 'type': 'text', 'icon': Icons.account_balance},
+            ],
+          },
+          {
+            'title': 'Cinsel Dokunulmazlığa Karşı Suçlar (TCK m.102-105)',
+            'icon': Icons.shield_outlined,
+            'items': [
+              'Cinsel saldırı',
+              'Çocukların cinsel istismarı',
+              'Reşit olmayanla cinsel ilişki',
+              'Cinsel taciz',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Mağdur/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Mağdur Yaşı', 'type': 'number', 'icon': Icons.cake},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Olay Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Şikayet Tarihi', 'type': 'date', 'icon': Icons.report},
+              {'name': 'Adli Tıp Raporu', 'type': 'file', 'icon': Icons.medical_services},
+              {'name': 'Psikolojik Değerlendirme', 'type': 'file', 'icon': Icons.psychology},
+              {'name': 'Gizlilik Talebi', 'type': 'checkbox', 'icon': Icons.visibility_off},
+              {'name': 'Mağdur Beyanı', 'type': 'longtext', 'icon': Icons.record_voice_over},
+              {'name': 'Deliller', 'type': 'file', 'icon': Icons.attach_file},
+            ],
+          },
+          {
+            'title': 'Hırsızlık (TCK m.141-142)',
+            'icon': Icons.lock_open,
+            'items': [
+              'Basit hırsızlık',
+              'Nitelikli hırsızlık',
+              'Konut dokunulmazlığını ihlal ile hırsızlık',
+              'İş yerinde hırsızlık',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Mağdur/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Çalınan Eşya Listesi', 'type': 'longtext', 'icon': Icons.list},
+              {'name': 'Tahmini Değer', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Olay Tarihi ve Saati', 'type': 'datetime', 'icon': Icons.access_time},
+              {'name': 'Olay Yeri (Ev/İşyeri/Araç)', 'type': 'text', 'icon': Icons.home},
+              {'name': 'Güvenlik Kamerası Kaydı', 'type': 'file', 'icon': Icons.videocam},
+              {'name': 'Parmak İzi/DNA Bulgusu', 'type': 'text', 'icon': Icons.fingerprint},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Zarar Tespiti', 'type': 'file', 'icon': Icons.assignment},
+            ],
+          },
+          {
+            'title': 'Dolandırıcılık (TCK m.157-158)',
+            'icon': Icons.campaign,
+            'items': [
+              'Basit dolandırıcılık',
+              'Nitelikli dolandırıcılık',
+              'Bilişim sistemlerini kullanarak dolandırıcılık',
+              'Kredi kartı ile dolandırıcılık',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Mağdur/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Dolandırıcılık Türü', 'type': 'dropdown', 'icon': Icons.category},
+              {'name': 'Zarar Miktarı', 'type': 'number', 'icon': Icons.money_off},
+              {'name': 'İletişim Kayıtları', 'type': 'file', 'icon': Icons.message},
+              {'name': 'Banka Hesap Hareketleri', 'type': 'file', 'icon': Icons.account_balance_wallet},
+              {'name': 'E-posta/SMS Yazışmaları', 'type': 'file', 'icon': Icons.email},
+              {'name': 'Sahte Belgeler', 'type': 'file', 'icon': Icons.article},
+              {'name': 'Olay Kronolojisi', 'type': 'longtext', 'icon': Icons.timeline},
+            ],
+          },
+        ],
+      },
+      
+      'Kişisel Hak ve Özgürlükler': {
+        'description': 'Kişisel hak, özgürlük ve mahremiyet ile ilgili suçlar',
+        'subcategories': [
+          {
+            'title': 'Hakaret (TCK m.125-126)',
+            'icon': Icons.chat_bubble_outline,
+            'items': [
+              'Basit hakaret',
+              'Alenen hakaret',
+              'Kamu görevlisine hakaret',
+              'Basın yoluyla hakaret',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şikayetçi/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Hakaret İçeriği', 'type': 'longtext', 'icon': Icons.format_quote},
+              {'name': 'Hakaret Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Hakaret Şekli', 'type': 'dropdown', 'icon': Icons.record_voice_over},
+              {'name': 'Tanıklar', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Ekran Görüntüleri', 'type': 'file', 'icon': Icons.screenshot},
+              {'name': 'Ses/Video Kaydı', 'type': 'file', 'icon': Icons.mic},
+              {'name': 'Yazılı Belgeler', 'type': 'file', 'icon': Icons.article},
+            ],
+          },
+          {
+            'title': 'Tehdit (TCK m.106)',
+            'icon': Icons.warning_amber,
+            'items': [
+              'Basit tehdit',
+              'Silahla tehdit',
+              'Cinsel saldırıda bulunmakla tehdit',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Tehdit Eden/Edilen', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Tehdit İçeriği', 'type': 'longtext', 'icon': Icons.dangerous},
+              {'name': 'Tehdit Tarihi ve Saati', 'type': 'datetime', 'icon': Icons.access_time},
+              {'name': 'Tehdit Şekli', 'type': 'dropdown', 'icon': Icons.phone},
+              {'name': 'Silah Kullanıldı mı?', 'type': 'checkbox', 'icon': Icons.gavel},
+              {'name': 'Mesaj/E-posta Kayıtları', 'type': 'file', 'icon': Icons.email},
+              {'name': 'Arama Kayıtları', 'type': 'file', 'icon': Icons.call},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+            ],
+          },
+          {
+            'title': 'Şantaj (TCK m.107)',
+            'icon': Icons.money_off,
+            'items': [
+              'Tehdit yoluyla hakkı olmayan bir yarar sağlamaya zorlamak',
+              'Hukuka aykırı bir davranışa zorlamak',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Mağdur/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Şantaj Konusu', 'type': 'longtext', 'icon': Icons.topic},
+              {'name': 'İstenen Yarar/Davranış', 'type': 'longtext', 'icon': Icons.request_quote},
+              {'name': 'Tehdit Unsuru', 'type': 'longtext', 'icon': Icons.dangerous},
+              {'name': 'İletişim Kayıtları', 'type': 'file', 'icon': Icons.message},
+              {'name': 'Para Transferi Kayıtları', 'type': 'file', 'icon': Icons.account_balance},
+            ],
+          },
+        ],
+      },
+      
+      'Malvarlığına Karşı Suçlar': {
+        'description': 'Hırsızlık, dolandırıcılık, mala zarar verme gibi malvarlığına karşı işlenen suçlar',
+        'subcategories': [
+          {
+            'title': 'Yağma (TCK m.148-149)',
+            'icon': Icons.local_atm,
+            'items': [
+              'Basit yağma',
+              'Nitelikli yağma',
+              'Yağmanın neticesi sebebiyle ağırlaşması',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Mağdur/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Yağmalanan Değer', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Olay Yeri ve Zamanı', 'type': 'datetime', 'icon': Icons.location_on},
+              {'name': 'Kullanılan Şiddet/Cebir', 'type': 'longtext', 'icon': Icons.fitness_center},
+              {'name': 'Silah Kullanımı', 'type': 'checkbox', 'icon': Icons.warning},
+              {'name': 'Yaralanma Durumu', 'type': 'text', 'icon': Icons.local_hospital},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Güvenlik Görüntüleri', 'type': 'file', 'icon': Icons.videocam},
+            ],
+          },
+          {
+            'title': 'Mala Zarar Verme (TCK m.151)',
+            'icon': Icons.broken_image,
+            'items': [
+              'Basit mala zarar verme',
+              'Nitelikli mala zarar verme',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Zarar Gören/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Zarar Gören Mal', 'type': 'text', 'icon': Icons.inventory},
+              {'name': 'Zarar Miktarı', 'type': 'number', 'icon': Icons.money},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Hasar Fotoğrafları', 'type': 'file', 'icon': Icons.photo_camera},
+              {'name': 'Ekspertiz Raporu', 'type': 'file', 'icon': Icons.assignment},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+            ],
+          },
+          {
+            'title': 'Güveni Kötüye Kullanma (TCK m.155)',
+            'icon': Icons.handshake,
+            'items': [
+              'Basit güveni kötüye kullanma',
+              'Nitelikli güveni kötüye kullanma',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Mağdur/Şüpheli', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Emanet İlişkisinin Kaynağı', 'type': 'text', 'icon': Icons.source},
+              {'name': 'Emanet Konusu', 'type': 'longtext', 'icon': Icons.inventory_2},
+              {'name': 'Zarar Miktarı', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Sözleşme/Anlaşma', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Yazışmalar', 'type': 'file', 'icon': Icons.email},
+              {'name': 'Banka Hareketleri', 'type': 'file', 'icon': Icons.account_balance},
+            ],
+          },
+        ],
+      },
+      
+      'Topluma Karşı Suçlar': {
+        'description': 'Kamu barışı, sağlığı ve çevreye karşı işlenen suçlar',
+        'subcategories': [
+          {
+            'title': 'Uyuşturucu İmal ve Ticareti (TCK m.188)',
+            'icon': Icons.dangerous_outlined,
+            'items': [
+              'Uyuşturucu madde imal etme',
+              'Uyuşturucu madde ticareti',
+              'Kullanmak için uyuşturucu bulundurma',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Sanık/Mağdur', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Madde Türü', 'type': 'text', 'icon': Icons.science},
+              {'name': 'Ele Geçen Miktar', 'type': 'text', 'icon': Icons.scale},
+              {'name': 'Yakalanma Tarihi ve Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Kolluk Tutanağı', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Laboratuvar Raporu', 'type': 'file', 'icon': Icons.biotech},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Tedavi Belgeleri', 'type': 'file', 'icon': Icons.medical_services},
+            ],
+          },
+          {
+            'title': 'Fuhuş (TCK m.227)',
+            'icon': Icons.block,
+            'items': [
+              'Fuhşa teşvik',
+              'Fuhşa aracılık',
+              'Çocukların fuhşa teşviki',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şüpheli/Mağdur', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Suç Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Olay Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+              {'name': 'Deliller', 'type': 'file', 'icon': Icons.attach_file},
+            ],
+          },
+        ],
+      },
+      
+      'Kamu İdaresinin Güvenilirliğine ve İşleyişine Karşı Suçlar': {
+        'description': 'Rüşvet, irtikap, zimmet gibi kamu görevlileri tarafından işlenen suçlar',
+        'subcategories': [
+          {
+            'title': 'Rüşvet (TCK m.252)',
+            'icon': Icons.money,
+            'items': [
+              'Rüşvet verme',
+              'Rüşvet alma',
+              'Nüfuz ticareti',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Kamu Görevlisi Bilgileri', 'type': 'text', 'icon': Icons.badge},
+              {'name': 'Rüşvet Konusu', 'type': 'longtext', 'icon': Icons.topic},
+              {'name': 'Rüşvet Miktarı', 'type': 'number', 'icon': Icons.attach_money},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Para Transfer Kayıtları', 'type': 'file', 'icon': Icons.account_balance_wallet},
+              {'name': 'Ses/Görüntü Kaydı', 'type': 'file', 'icon': Icons.videocam},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+            ],
+          },
+          {
+            'title': 'İrtikap (TCK m.250)',
+            'icon': Icons.gavel,
+            'items': [
+              'Kamu görevinin sağladığı nüfuzun kötüye kullanılması',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şikayet Edilen Görevli', 'type': 'text', 'icon': Icons.badge},
+              {'name': 'İrtikap Konusu', 'type': 'longtext', 'icon': Icons.topic},
+              {'name': 'Alınan Yarar', 'type': 'longtext', 'icon': Icons.attach_money},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Belgeler', 'type': 'file', 'icon': Icons.description},
+            ],
+          },
+          {
+            'title': 'Zimmet (TCK m.247)',
+            'icon': Icons.account_balance_wallet,
+            'items': [
+              'Zimmet',
+              'Kullanma zimmeti',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Zimmet Yapan Görevli', 'type': 'text', 'icon': Icons.badge},
+              {'name': 'Zimmete Konu Mal/Para', 'type': 'longtext', 'icon': Icons.inventory},
+              {'name': 'Zarar Miktarı', 'type': 'number', 'icon': Icons.money_off},
+              {'name': 'Tespit Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'Denetim Raporları', 'type': 'file', 'icon': Icons.assignment},
+              {'name': 'Mali Belgeler', 'type': 'file', 'icon': Icons.receipt_long},
+            ],
+          },
+        ],
+      },
+      
+      'Adliyeye Karşı Suçlar': {
+        'description': 'Yargılamanın işleyişini engelleyen suçlar',
+        'subcategories': [
+          {
+            'title': 'Yalan Tanıklık (TCK m.272)',
+            'icon': Icons.record_voice_over,
+            'items': [
+              'Yalan tanıklık',
+              'Yalan yere yemin',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Yalan Tanıklık Yapan', 'type': 'text', 'icon': Icons.person_outline},
+              {'name': 'Hangi Dava', 'type': 'text', 'icon': Icons.gavel},
+              {'name': 'Yalan Beyandaki İçerik', 'type': 'longtext', 'icon': Icons.format_quote},
+              {'name': 'Duruşma Tutanağı', 'type': 'file', 'icon': Icons.description},
+              {'name': 'Gerçek Deliller', 'type': 'file', 'icon': Icons.fact_check},
+            ],
+          },
+          {
+            'title': 'Suç Delillerini Yok Etme (TCK m.281)',
+            'icon': Icons.delete_forever,
+            'items': [
+              'Delilleri karartma',
+              'Delilleri yok etme',
+              'Delilleri gizleme',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Şüpheli/Mağdur', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Yok Edilen Delil', 'type': 'longtext', 'icon': Icons.inventory_2},
+              {'name': 'Olay Tarihi', 'type': 'date', 'icon': Icons.calendar_today},
+              {'name': 'İlgili Soruşturma', 'type': 'text', 'icon': Icons.search},
+              {'name': 'Tanık Beyanları', 'type': 'longtext', 'icon': Icons.people_outline},
+            ],
+          },
+        ],
+      },
+      
+      'Kamunun Sağlığına Karşı Suçlar': {
+        'description': 'Kamu sağlığını tehlikeye sokan suçlar',
+        'subcategories': [
+          {
+            'title': 'İhmal veya Tedbirsizlik Sonucu Yaralama/Öldürme',
+            'icon': Icons.medical_services,
+            'items': [
+              'Taksirle yaralama',
+              'Taksirle ölüme neden olma',
+              'Bilinçli taksir',
+            ],
+            'requiredFields': [
+              {'name': 'Müvekkil Adı Soyadı', 'type': 'text', 'icon': Icons.person},
+              {'name': 'Sanık/Mağdur', 'type': 'dropdown', 'icon': Icons.people},
+              {'name': 'Olay Tarihi ve Yeri', 'type': 'text', 'icon': Icons.location_on},
+              {'name': 'İhmalin/Tedbirsizliğin Konusu', 'type': 'longtext', 'icon': Icons.warning},
+              {'name': 'Neticesi (Yaralanma/Ölüm)', 'type': 'dropdown', 'icon': Icons.local_hospital},
+              {'name': 'Sağlık Raporu', 'type': 'file', 'icon': Icons.medical_information},
+              {'name': 'Bilirkişi Raporu', 'type': 'file', 'icon': Icons.assignment},
+              {'name': 'Olay Yeri İnceleme', 'type': 'file', 'icon': Icons.search},
+            ],
+          },
+        ],
+      },
+    };
+    
+    return data[category] ?? {
+      'description': 'Kategori bilgisi bulunamadı',
+      'subcategories': [],
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF0A0E21),
+              const Color(0xFF1A1F3C),
+              const Color(0xFF0A0E21),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: Row(
+                  children: [
+                    // Sol taraf - Alt kategoriler
+                    _buildCategoryList(),
+                    
+                    // Sağ taraf - Detay ve form
+                    Expanded(
+                      flex: 7,
+                      child: _buildDetailContent(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            categoryColor.withOpacity(0.15),
+            Colors.transparent,
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: categoryColor.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Geri butonu
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          
+          const SizedBox(width: 20),
+          
+          // Logo ve başlık
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [categoryColor, categoryColor.withOpacity(0.7)],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: categoryColor.withOpacity(0.4),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Text(
+              categoryEmoji,
+              style: const TextStyle(fontSize: 32),
+            ),
+          ),
+          
+          const SizedBox(width: 20),
+          
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.categoryName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  categoryData['description'],
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Yeni kayıt butonu
+          NeonButton(
+            onPressed: () => _showAddRecordDialog(),
+            icon: Icons.add,
+            label: 'Yeni Kayıt',
+            color: categoryColor,
+            width: 160,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryList() {
+    final subcategories = categoryData['subcategories'] as List<Map<String, dynamic>>;
+    
+    return Container(
+      width: 320,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        border: Border(
+          right: BorderSide(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: subcategories.length,
+        itemBuilder: (context, index) {
+          final subcat = subcategories[index];
+          final isSelected = _selectedTab == index;
+          
+          return FadeInLeft(
+            delay: Duration(milliseconds: index * 100),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedTab = index),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: [
+                              categoryColor.withOpacity(0.3),
+                              categoryColor.withOpacity(0.1),
+                            ],
+                          )
+                        : null,
+                    color: !isSelected
+                        ? Colors.white.withOpacity(0.03)
+                        : null,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected
+                          ? categoryColor.withOpacity(0.5)
+                          : Colors.white.withOpacity(0.08),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: categoryColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          subcat['icon'],
+                          color: categoryColor,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          subcat['title'],
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.7),
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailContent() {
+    final subcategories = categoryData['subcategories'] as List<Map<String, dynamic>>;
+    if (subcategories.isEmpty) {
+      return const Center(
+        child: Text(
+          'Henüz alt kategori yok',
+          style: TextStyle(color: Colors.white54),
+        ),
+      );
+    }
+    
+    final selectedSubcat = subcategories[_selectedTab];
+    final items = selectedSubcat['items'] as List<String>;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FadeIn(
+            child: Text(
+              selectedSubcat['title'],
+              style: TextStyle(
+                color: categoryColor,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Kapsamdaki maddeler
+          FadeIn(
+            delay: const Duration(milliseconds: 200),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.05),
+                    Colors.white.withOpacity(0.02),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: categoryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Kapsanan Suç Türleri',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ...items.map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: categoryColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Kaydedilecek bilgiler
+          FadeIn(
+            delay: const Duration(milliseconds: 400),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.edit_note,
+                      color: categoryColor,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Dosyaya Kaydedilecek Bilgiler',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 20),
+                
+                _buildFieldsList(selectedSubcat['requiredFields']),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldsList(List<Map<String, dynamic>> fields) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: fields.map((field) {
+        return Container(
+          width: (MediaQuery.of(context).size.width - 400) / 2 - 40,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: categoryColor.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  field['icon'],
+                  color: categoryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      field['name'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getFieldTypeLabel(field['type']),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  String _getFieldTypeLabel(String type) {
+    switch (type) {
+      case 'text':
+        return 'Metin';
+      case 'longtext':
+        return 'Uzun Metin';
+      case 'number':
+        return 'Sayı';
+      case 'date':
+        return 'Tarih';
+      case 'datetime':
+        return 'Tarih & Saat';
+      case 'dropdown':
+        return 'Seçim';
+      case 'checkbox':
+        return 'Evet/Hayır';
+      case 'file':
+        return 'Dosya Ekleme';
+      default:
+        return 'Metin';
+    }
+  }
+
+  void _showAddRecordDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1F3C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          'Yeni ${widget.categoryName} Kaydı',
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Bu özellik yakında eklenecektir.\nTüm form alanları ve veritabanı entegrasyonu hazır hale gelecektir.',
+          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Tamam',
+              style: TextStyle(color: categoryColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

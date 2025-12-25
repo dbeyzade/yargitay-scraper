@@ -1,0 +1,20 @@
+services:
+  - type: worker
+    name: yargitay-scraper
+    env: python
+    region: frankfurt
+    plan: free
+    
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      
+    startCommand: python scraper.py
+    
+    envVars:
+      - key: SUPABASE_URL
+        value: https://wievkhwncqmlfkdcjggp.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpZXZraHduY3FtbGZrZGNqZ2dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MzQ3MDcsImV4cCI6MjA4MjAxMDcwN30.Z9-bOxIAsNlczCPhSZl0ug4yn1SCuCuE2PFU6ZcDxV8
+      - key: PYTHON_VERSION
+        value: 3.11.0
